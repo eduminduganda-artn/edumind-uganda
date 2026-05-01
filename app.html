@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EduMind Uganda – AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green: #1a7a4a;
+    --green-light: #25a862;
+    --yellow: #f5c518;
+    --dark: #0d1f14;
+    --dark2: #132b1c;
+    --dark3: #1c3826;
+    --white: #f8fdf9;
+    --gray: #a8bfb0;
+    --border: rgba(255,255,255,0.08);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--dark);
+    color: var(--white);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px; min-width: 260px;
+    background: var(--dark2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 1.5rem 1rem;
+    gap: 1rem;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.3rem;
+    padding: 0.5rem 0.8rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .logo span { color: var(--yellow); }
+  .logo small {
+    font-size: 0.6rem; color: var(--gray);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400; margin-left: 0.2rem;
+  }
+  .new-chat-btn {
+    background: var(--green-light);
+    color: white; border: none;
+    padding: 0.75rem 1rem; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 0.9rem;
+    cursor: pointer; display: flex;
+    align-items: center; gap: 0.5rem;
+    transition: background 0.2s;
+  }
+  .new-chat-btn:hover { background: var(--green); }
+  .sidebar-label {
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gray); padding: 0 0.8rem;
+    margin-top: 0.5rem;
+  }
+  .subject-list {
+    display: flex; flex-direction: column; gap: 0.2rem;
+    overflow-y: auto; flex: 1;
+  }
+  .subject-btn {
+    background: none; border: none;
+    color: var(--gray); text-align: left;
+    padding: 0.5rem 0.8rem; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .subject-btn:hover { background: var(--dark3); color: var(--white); }
+  .subject-btn.active { background: var(--dark3); color: var(--green-light); }
+  .offline-badge {
+    background: rgba(37,168,98,0.12);
+    border: 1px solid rgba(37,168,98,0.25);
+    border-radius: 8px; padding: 0.6rem 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; color: var(--green-light);
+  }
+
+  /* MAIN CHAT */
+  .main {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .chat-header {
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .chat-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem; font-weight: 700;
+  }
+  .chat-header span {
+    font-size: 0.8rem; color: var(--gray);
+  }
+  .level-selector {
+    display: flex; gap: 0.5rem;
+  }
+  .level-btn {
+    background: var(--dark2); border: 1px solid var(--border);
+    color: var(--gray); padding: 0.35rem 0.8rem;
+    border-radius: 6px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .level-btn.active {
+    background: var(--green-light); color: white; border-color: var(--green-light);
+  }
+
+  /* MESSAGES */
+  .messages {
+    flex: 1; overflow-y: auto;
+    padding: 2rem; display: flex;
+    flex-direction: column; gap: 1.5rem;
+  }
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--dark3); border-radius: 4px; }
+
+  /* WELCOME */
+  .welcome {
+    text-align: center; padding: 3rem 1rem;
+    max-width: 500px; margin: 0 auto;
+  }
+  .welcome-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+  .welcome h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem; font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+  .welcome p { color: var(--gray); font-size: 0.9rem; line-height: 1.6; }
+  .quick-prompts {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.7rem; margin-top: 2rem;
+  }
+  .quick-prompt {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.9rem;
+    text-align: left; cursor: pointer;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    color: var(--white);
+  }
+  .quick-prompt:hover { border-color: var(--green-light); background: var(--dark3); }
+  .quick-prompt .qp-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
+  .quick-prompt .qp-text { font-size: 0.82rem; color: var(--gray); }
+  .quick-prompt .qp-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem; }
+
+  /* MESSAGE BUBBLES */
+  .msg { display: flex; gap: 0.8rem; max-width: 800px; }
+  .msg.user { flex-direction: row-reverse; margin-left: auto; }
+  .msg-avatar {
+    width: 34px; height: 34px; min-width: 34px;
+    border-radius: 50%; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .msg.ai .msg-avatar { background: var(--green); }
+  .msg.user .msg-avatar { background: var(--dark3); }
+  .msg-content {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.2rem;
+    font-size: 0.92rem; line-height: 1.7;
+    max-width: 680px;
+  }
+  .msg.user .msg-content {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .msg-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem; margin: 0.8rem 0 0.3rem;
+    color: var(--green-light);
+  }
+  .msg-content h3:first-child { margin-top: 0; }
+  .msg-content ul { padding-left: 1.2rem; margin: 0.4rem 0; }
+  .msg-content li { margin: 0.2rem 0; }
+  .msg-content code {
+    background: rgba(0,0,0,0.3);
+    padding: 0.1rem 0.4rem; border-radius: 4px;
+    font-size: 0.85rem; font-family: monospace;
+  }
+  .msg-content pre {
+    background: rgba(0,0,0,0.3);
+    padding: 1rem; border-radius: 8px;
+    overflow-x: auto; margin: 0.5rem 0;
+    font-size: 0.82rem; font-family: monospace;
+    line-height: 1.5;
+  }
+  .msg-content .diagram {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem;
+    font-family: monospace; font-size: 0.8rem;
+    line-height: 1.6; margin: 0.5rem 0;
+    white-space: pre; overflow-x: auto;
+  }
+  .msg-label {
+    font-size: 0.72rem; color: var(--gray);
+    margin-bottom: 0.4rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .thinking {
+    display: flex; gap: 4px; align-items: center;
+    padding: 0.3rem 0;
+  }
+  .thinking span {
+    width: 7px; height: 7px;
+    background: var(--green-light);
+    border-radius: 50%;
+    animation: bounce 1.2s ease infinite;
+  }
+  .thinking span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+    30% { transform: translateY(-8px); opacity: 1; }
+  }
+
+  /* INPUT */
+  .input-area {
+    padding: 1rem 2rem 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .input-box {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; align-items: flex-end; gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    transition: border-color 0.2s;
+  }
+  .input-box:focus-within { border-color: var(--green-light); }
+  #userInput {
+    flex: 1; background: none; border: none;
+    color: var(--white); font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; resize: none;
+    outline: none; line-height: 1.5;
+    min-height: 24px; max-height: 120px;
+  }
+  #userInput::placeholder { color: var(--gray); }
+  .send-btn {
+    background: var(--green-light); border: none;
+    color: white; width: 36px; height: 36px;
+    border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--green); }
+  .send-btn:disabled { background: var(--dark3); cursor: not-allowed; }
+  .input-hint {
+    font-size: 0.75rem; color: var(--gray);
+    margin-top: 0.5rem; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">Edu<span>Mind</span><small>UGANDA</small></div>
+  <button class="new-chat-btn" onclick="newChat()">✏ New Question</button>
+
+  <div class="sidebar-label">Subjects</div>
+  <div class="subject-list">
+    <button class="subject-btn active" onclick="setSubject(this,'General')">📚 All Subjects</button>
+    <button class="subject-btn" onclick="setSubject(this,'Mathematics')">🔢 Mathematics</button>
+    <button class="subject-btn" onclick="setSubject(this,'Physics')">⚛ Physics</button>
+    <button class="subject-btn" onclick="setSubject(this,'Chemistry')">🧪 Chemistry</button>
+    <button class="subject-btn" onclick="setSubject(this,'Biology')">🧬 Biology</button>
+    <button class="subject-btn" onclick="setSubject(this,'Agriculture')">🌱 Agriculture</button>
+    <button class="subject-btn" onclick="setSubject(this,'ICT')">💻 ICT</button>
+    <button class="subject-btn" onclick="setSubject(this,'Economics')">📈 Economics</button>
+    <button class="subject-btn" onclick="setSubject(this,'Geography')">🌍 Geography</button>
+    <button class="subject-btn" onclick="setSubject(this,'History')">📜 History</button>
+    <button class="subject-btn" onclick="setSubject(this,'Kiswahili')">🗣 Kiswahili</button>
+    <button class="subject-btn" onclick="setSubject(this,'Literature')">📖 Literature</button>
+    <button class="subject-btn" onclick="setSubject(this,'Entrepreneurship')">💡 Entrepreneurship</button>
+    <button class="subject-btn" onclick="setSubject(this,'General Paper')">📝 General Paper</button>
+    <button class="subject-btn" onclick="setSubject(this,'CRE')">✝ CRE</button>
+    <button class="subject-btn" onclick="setSubject(this,'IRE')">☪ IRE</button>
+  </div>
+
+  <div class="offline-badge">
+    🟢 Running Offline — No Internet Needed
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="chat-header">
+    <div>
+      <h2 id="subjectTitle">All Subjects</h2>
+      <span>Uganda NCDC 2025 Curriculum</span>
+    </div>
+    <div class="level-selector">
+      <button class="level-btn active" onclick="setLevel(this,'O-Level')">O-Level</button>
+      <button class="level-btn" onclick="setLevel(this,'A-Level')">A-Level</button>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🎓</div>
+      <h2>Hello! I'm EduMind</h2>
+      <p>Your offline AI tutor for Uganda O-Level and A-Level. Ask me anything about your subjects — I'll explain it clearly with Uganda examples.</p>
+      <div class="quick-prompts">
+        <button class="quick-prompt" onclick="quickAsk('Explain photosynthesis with a diagram')">
+          <div class="qp-icon">🌿</div>
+          <div class="qp-title">Photosynthesis Diagram</div>
+          <div class="qp-text">Biology with visual</div>
+        </button>
+        <button class="quick-prompt" onclick="quickAsk('Solve: 2x² + 5x - 3 = 0 step by step')">
+          <div class="qp-icon">🔢</div>
+          <div class="qp-title">Quadratic Equations</div>
+          <div class="qp-text">Mathematics working</div>
+        </button>
+        <button class="quick-prompt" onclick="quickAsk('Explain the causes of poverty in Uganda')">
+          <div class="qp-icon">📈</div>
+          <div class="qp-title">Uganda Economy</div>
+          <div class="qp-text">Economics & General Paper</div>
+        </button>
+        <button class="quick-prompt" onclick="quickAsk('What are the effects of soil erosion on agriculture in Uganda?')">
+          <div class="qp-icon">🌱</div>
+          <div class="qp-title">Soil Erosion Effects</div>
+          <div class="qp-text">Agriculture & Geography</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-box">
+      <textarea id="userInput" rows="1"
+        placeholder="Ask any question about your subjects..."
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+    <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+  </div>
+</div>
+
+<script>
+  let currentSubject = 'General';
+  let currentLevel = 'O-Level';
+  let isThinking = false;
+  let conversationHistory = [];
+
+  const SYSTEM_PROMPT = `You are EduMind, an offline AI tutor for Uganda secondary school students following the NCDC competency-based curriculum (O-Level and A-Level 2025).
+
+IDENTITY: You are specifically built for Ugandan students. You are knowledgeable, patient, encouraging, and always relate content to Uganda.
+
+SUBJECT COVERAGE: Mathematics, Physics, Chemistry, Biology, Agriculture, ICT, Economics, Geography, History, Literature in English, Kiswahili, CRE, IRE, Entrepreneurship, General Paper, Food & Nutrition, Art & Design, Music, Subsidiary Mathematics, Local Languages, Clothing & Textiles.
+
+RULES:
+1. Always use Uganda context in examples: Lake Victoria, River Nile, Kampala, Entebbe, Uganda's economy, local crops (matooke, coffee, maize, sugarcane, cotton), local animals, local geography.
+2. For Mathematics: always show full step-by-step working. Never skip steps.
+3. For Sciences (Physics, Chemistry, Biology): include ASCII diagrams when helpful. Use this format for diagrams inside a code block labeled DIAGRAM.
+4. For Agriculture: reference Uganda's major crops, climate zones, and farming practices.
+5. For Kiswahili questions: respond in Kiswahili. For English questions: respond in English.
+6. Structure answers clearly with headings when the answer is long.
+7. Align answers to UNEB competency-based style — focus on understanding concepts, not just memorisation.
+8. Cross-cutting issues: link answers to environment, health, citizenship, and life skills where relevant.
+9. Keep language appropriate for secondary school level (S1-S6).
+10. Be encouraging. If a student seems confused, offer to explain again differently.
+11. For diagrams, use ASCII art inside a code block. Example:
+\`\`\`diagram
+     Sun
+      |
+      ↓ Light
+  [Leaf Cell]
+  Chlorophyll absorbs light
+      |
+CO2 + H2O → Glucose + O2
+\`\`\`
+
+EXAM TIPS: When relevant, mention what UNEB typically asks about this topic and how to structure exam answers.`;
+
+  function setSubject(btn, subject) {
+    document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSubject = subject;
+    document.getElementById('subjectTitle').textContent =
+      subject === 'General' ? 'All Subjects' : subject;
+  }
+
+  function setLevel(btn, level) {
+    document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLevel = level;
+  }
+
+  function newChat() {
+    conversationHistory = [];
+    const msgs = document.getElementById('messages');
+    msgs.innerHTML = '';
+    const welcome = document.createElement('div');
+    welcome.className = 'welcome';
+    welcome.id = 'welcome';
+    welcome.innerHTML = `
+      <div class="welcome-icon">🎓</div>
+      <h2>New Question</h2>
+      <p>Ask me anything about your ${currentSubject === 'General' ? 'subjects' : currentSubject} at ${currentLevel} level.</p>`;
+    msgs.appendChild(welcome);
+  }
+
+  function quickAsk(text) {
+    document.getElementById('userInput').value = text;
+    sendMessage();
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function removeWelcome() {
+    const w = document.getElementById('welcome');
+    if (w) w.remove();
+  }
+
+  function addMessage(role, content, isLoading = false) {
+    removeWelcome();
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = role === 'ai' ? '🎓' : '👤';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-content';
+
+    if (isLoading) {
+      bubble.innerHTML = '<div class="thinking"><span></span><span></span><span></span></div>';
+      div.id = 'thinking-msg';
+    } else if (role === 'ai') {
+      bubble.innerHTML = formatResponse(content);
+    } else {
+      bubble.textContent = content;
+    }
+
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function formatResponse(text) {
+    // Format diagrams
+    text = text.replace(/```diagram\n?([\s\S]*?)```/g, '<div class="diagram">$1</div>');
+    // Format code blocks
+    text = text.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre>$1</pre>');
+    // Format headers
+    text = text.replace(/^### (.*)/gm, '<h3>$1</h3>');
+    text = text.replace(/^## (.*)/gm, '<h3>$1</h3>');
+    text = text.replace(/^# (.*)/gm, '<h3>$1</h3>');
+    // Bold
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Bullet points
+    text = text.replace(/^[\-\*] (.*)/gm, '<li>$1</li>');
+    text = text.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    // Line breaks
+    text = text.replace(/\n\n/g, '</p><p>');
+    text = text.replace(/\n/g, '<br>');
+    return `<p>${text}</p>`;
+  }
+
+  async function sendMessage() {
+    if (isThinking) return;
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    document.getElementById('sendBtn').disabled = true;
+    isThinking = true;
+
+    addMessage('user', text);
+
+    const subjectContext = currentSubject !== 'General'
+      ? ` The student is asking about ${currentSubject} at ${currentLevel} level.`
+      : ` The student is at ${currentLevel} level.`;
+
+    conversationHistory.push({
+      role: 'user',
+      content: text + subjectContext
+    });
+
+    const thinkingMsg = addMessage('ai', '', true);
+
+    try {
+      const response = await fetch('http://localhost:11434/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'phi3:mini',
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...conversationHistory
+          ],
+          stream: false
+        })
+      });
+
+      const data = await response.json();
+      const reply = data.message?.content || 'Sorry, I could not understand that. Please try again.';
+
+      thinkingMsg.remove();
+      addMessage('ai', reply);
+
+      conversationHistory.push({ role: 'assistant', content: reply });
+
+    } catch (err) {
+      thinkingMsg.remove();
+      addMessage('ai', '⚠️ EduMind is starting up. Please wait 30 seconds and try again. If this keeps happening, restart the EduMind app.');
+    }
+
+    isThinking = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('userInput').focus();
+  }
+</script>
+</body>
+</html>
